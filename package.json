@@ -1,0 +1,22 @@
+{
+  "name": "cc-client",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "serve": "live-server --port=9000 --host=localhost public/",
+    "watch": "watchify src/index.js -o public/index.js -t [ babelify --presets [ '@babel/preset-env' ] ]"
+  },
+  "dependencies": {
+    "@babel/core": "^7.0.0-beta.49",
+    "@babel/node": "^7.0.0-beta.49",
+    "@babel/preset-env": "^7.0.0-beta.49",
+    "auth0tter": "../cc-server/auth0tter",
+    "babelify": "^9.0.0",
+    "browserify": "^16.2.2",
+    "live-server": "^1.2.0",
+    "npx": "^10.2.0",
+    "socket.io-client": "^2.2.0",
+    "watchify": "^3.11.0"
+  }
+}
