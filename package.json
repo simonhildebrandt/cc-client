@@ -5,12 +5,15 @@
   "license": "MIT",
   "scripts": {
     "serve": "live-server --port=9000 --host=localhost public/",
-    "watch": "watchify src/index.js -o public/index.js -t [ babelify --presets [ '@babel/preset-env' ] ]"
+    "watch": "watchify src/index.js -o public/index.js -t [ babelify ]",
+    "watchsw": "watchify src/serviceWorker.js -o public/sw.js -t [ babelify ]"
   },
   "dependencies": {
     "@babel/core": "^7.0.0-beta.49",
     "@babel/node": "^7.0.0-beta.49",
+    "@babel/polyfill": "^7.4.3",
     "@babel/preset-env": "^7.0.0-beta.49",
+    "@material-ui/icons": "^3.0.2",
     "auth0tter": "../cc-server/auth0tter",
     "babelify": "^9.0.0",
     "browserify": "^16.2.2",
@@ -18,5 +21,16 @@
     "npx": "^10.2.0",
     "socket.io-client": "^2.2.0",
     "watchify": "^3.11.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/plugin-transform-react-jsx": "^7.3.0",
+    "@babel/plugin-transform-regenerator": "^7.4.3",
+    "@material-ui/core": "^3.9.2",
+    "idb": "^4.0.3",
+    "react": "^16.8.4",
+    "react-dom": "^16.8.4",
+    "react-jss": "^8.6.1",
+    "react-pose": "^4.0.8"
   }
 }
