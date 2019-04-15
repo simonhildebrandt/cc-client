@@ -27,10 +27,13 @@
     "@babel/plugin-transform-react-jsx": "^7.3.0",
     "@babel/plugin-transform-regenerator": "^7.4.3",
     "@material-ui/core": "^3.9.2",
+    "firebase": "^5.9.4",
+    "firebaseui": "^3.5.2",
     "idb": "^4.0.3",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-jss": "^8.6.1",
-    "react-pose": "^4.0.8"
+    "react-pose": "^4.0.8",
+    "url-parse": "^1.4.6"
   }
 }

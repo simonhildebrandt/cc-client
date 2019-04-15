@@ -1,4 +1,8 @@
-import { loadFiles, lockFile, unlockFile, deleteFile } from './uploadState';
+import "@babel/polyfill";
+
+import { loadFiles, deleteFile, saveUploadedFile } from './uploadState';
+import URL from 'url-parse';
+
 
 const cacheName = 'site-cache';
 const filesToCache = [
@@ -40,6 +44,7 @@ self.addEventListener('install', function(e) {
 
 self.addEventListener('sync', function(event) {
   if (event.tag == 'upload') {
+    console.log('attempting sync')
     event.waitUntil(queueFiles());
   }
 });
@@ -52,48 +57,54 @@ const uploadFiles = files => {
   return files.reduce((p, file) => p.then(uploadFile(file)), Promise.resolve());
 }
 
-const uploadFile = file => {
-  console.log('checking', file)
-  const {fileId} = file;
+async function uploadFile(record) {
+  const { fileId, file, extra } = record;
+  const { name, lastModified, type, size } = file;
+  const fileDetails = { name, lastModified, type, size };
 
-  return lockFile(fileId)
-    .then(() => console.log('uploading', file))
-    .then(() => sendToClients({uploading: fileDetails(file)}))
-    .then(signUpload)
-    .then(signature => sendFile({signature, file}))
-    .then(() => console.log('upload done'))
-    .then(() => deleteFile(fileId))
-    .catch(error => {
-      sendToClients({error: fileDetails(file)});
-      throw new Error('uploading file failed', file);
-    })
-    .then(() => sendToClients({uploaded: fileDetails(file)}))
-    .finally(() => unlockFile(fileId))
+  await sendToClients({action: 'uploading', fileId, fileDetails, extra})
+
+  try {
+    const {status, json} = await signUpload(fileDetails);
+    if (status == 422) {
+      await sendToClients({action: 'invalid', fileId, fileDetails, extra});
+      await deleteFile(fileId);
+      return;
+    }
+    const {uploadURL, key} = json;
+    await sendFile({uploadURL, file});
+    await deleteFile(fileId);
+    await saveUploadedFile(file, key, extra);
+    await sendToClients({action: 'uploaded', fileId, fileDetails, key, extra});
+  } catch(err) {
+    await sendToClients({action: 'error', fileId, fileDetails, extra});
+    console.log(err)
+    throw new Error('uploading file failed', file);
+  }
 }
 
-const sendFile = ({signature, file}) => {
-  const {uploadURL} = signature;
-  console.log('params', {uploadURL, file})
-  const options = { method: 'put', mode: 'cors', body: file.file }
+const sendFile = ({uploadURL, file}) => {
+  const options = { method: 'put', mode: 'cors', body: file }
 
   return fetch(uploadURL, options)
   .then(response => {
-    if (!response.ok) { throw new Error('error in upload')}
+    if (!response.ok) {
+      response.text().then(body => console.log('upload error!', body))
+      throw new Error('error in upload')
+    };
   })
 }
 
-const fileDetails = ({fileId, file}) => {
-  const { name, lastModified, type, size } = file
-  return {fileId, name, lastModified, type, size }
-}
-
 const sendToClients = msg => {
-  clients.matchAll().then(clients => {
+  return clients.matchAll().then(clients => {
     clients.forEach(client => {
       client.postMessage(JSON.stringify(msg));
     })
   })
 }
-const signUpload = () => {
-  return fetch(signingURL, {mode: 'cors'}).then(response => response.json())
+const signUpload = file => {
+  const url = new URL(signingURL, true);
+  url.set('query', file)
+  console.log(file, url, url.href)
+  return fetch(url, {mode: 'cors'}).then(response => ({status: response.status, json: response.json()}))
 }
